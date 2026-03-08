@@ -105,7 +105,7 @@ border-radius:10px;
 width:300px;
 }
 
-.adminPanel input{
+.adminPanel input, .adminPanel select{
 width:100%;
 margin:5px 0;
 padding:6px;
@@ -121,7 +121,7 @@ padding:6px;
 
 <div class="settings" onclick="openAdmin()">⚙️</div>
 
-<img src="logo.png">
+<h2>EZ Meals</h2>
 
 </header>
 
@@ -130,7 +130,13 @@ padding:6px;
 <div id="items"></div>
 
 <div class="total">
+
 Total Rs <span id="total">0</span>
+
+<br><br>
+
+<button onclick="order()">Order on WhatsApp</button>
+
 </div>
 
 <div id="adminLogin" class="adminBox">
@@ -149,9 +155,7 @@ Total Rs <span id="total">0</span>
 <h3>Add Item</h3>
 
 <input id="iname" placeholder="Name">
-
 <input id="idesc" placeholder="Description">
-
 <input id="iprice" placeholder="Price per 100g">
 
 <input type="file" id="iimg">
@@ -172,7 +176,7 @@ Total Rs <span id="total">0</span>
 
 <script>
 
-let data={
+let data=JSON.parse(localStorage.getItem("ezmeals")) || {
 fruits:[],
 soup:[],
 curry:[]
@@ -328,17 +332,17 @@ let reader=new FileReader()
 reader.onload=function(){
 
 let item={
-
 name:iname.value,
 desc:idesc.value,
 price:Number(iprice.value),
 img:reader.result
-
 }
 
 data[ipack.value].push(item)
 
-alert("Item Added")
+localStorage.setItem("ezmeals",JSON.stringify(data))
+
+alert("Item Added Successfully")
 
 }
 
@@ -349,6 +353,32 @@ reader.readAsDataURL(file)
 if('serviceWorker' in navigator){
 navigator.serviceWorker.register('service-worker.js')
 }
+
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt',(e)=>{
+
+e.preventDefault();
+
+deferredPrompt=e;
+
+let installBtn=document.createElement("button")
+
+installBtn.innerText="Install EZ Meals"
+
+installBtn.style.position="fixed"
+installBtn.style.bottom="90px"
+installBtn.style.right="20px"
+
+document.body.appendChild(installBtn)
+
+installBtn.onclick=()=>{
+
+deferredPrompt.prompt()
+
+}
+
+})
 
 </script>
 
