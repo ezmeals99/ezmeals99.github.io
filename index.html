@@ -62,15 +62,53 @@ border-radius:12px 12px 0 0;
 padding:10px;
 }
 
+.qty{
+display:flex;
+justify-content:center;
+gap:10px;
+margin-top:10px;
+}
+
+button{
+padding:6px 12px;
+font-size:16px;
+cursor:pointer;
+}
+
 .total{
 position:fixed;
 bottom:20px;
 right:20px;
-background:green;
+background:#28a745;
 color:white;
-padding:12px 18px;
+padding:14px 20px;
 border-radius:30px;
 font-weight:bold;
+}
+
+.adminBox{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.5);
+display:none;
+align-items:center;
+justify-content:center;
+}
+
+.adminPanel{
+background:white;
+padding:20px;
+border-radius:10px;
+width:300px;
+}
+
+.adminPanel input{
+width:100%;
+margin:5px 0;
+padding:6px;
 }
 
 </style>
@@ -81,38 +119,232 @@ font-weight:bold;
 
 <header>
 
-<div class="settings">⚙️</div>
+<div class="settings" onclick="openAdmin()">⚙️</div>
 
 <img src="logo.png">
 
 </header>
 
-<div class="container">
+<div id="packs" class="container"></div>
 
-<div class="card">
-<img src="https://source.unsplash.com/400x300/?fruits">
-<h3>Fruit Packs</h3>
-</div>
-
-<div class="card">
-<img src="https://source.unsplash.com/400x300/?soup">
-<h3>Soup Packs</h3>
-</div>
-
-<div class="card">
-<img src="https://source.unsplash.com/400x300/?curry">
-<h3>Curry Packs</h3>
-</div>
-
-</div>
+<div id="items"></div>
 
 <div class="total">
+Total Rs <span id="total">0</span>
+</div>
 
-Total Rs 0
+<div id="adminLogin" class="adminBox">
+
+<div class="adminPanel">
+
+<h3>Admin Login</h3>
+
+<input id="user" placeholder="Username">
+<input id="pass" type="password" placeholder="Password">
+
+<button onclick="login()">Login</button>
+
+<div id="adminControls" style="display:none">
+
+<h3>Add Item</h3>
+
+<input id="iname" placeholder="Name">
+
+<input id="idesc" placeholder="Description">
+
+<input id="iprice" placeholder="Price per 100g">
+
+<input type="file" id="iimg">
+
+<select id="ipack">
+<option value="fruits">Fruit Pack</option>
+<option value="soup">Soup Pack</option>
+<option value="curry">Curry Pack</option>
+</select>
+
+<button onclick="addItem()">Add Item</button>
+
+</div>
+
+</div>
 
 </div>
 
 <script>
+
+let data={
+fruits:[],
+soup:[],
+curry:[]
+}
+
+let cart={}
+let total=0
+
+function renderPacks(){
+
+let html=""
+
+html+=packCard("Fruit Packs","fruits")
+html+=packCard("Soup Packs","soup")
+html+=packCard("Curry Packs","curry")
+
+document.getElementById("packs").innerHTML=html
+
+}
+
+function packCard(name,type){
+
+return `
+<div class="card" onclick="openPack('${type}')">
+<img src="https://source.unsplash.com/400x300/?${type}">
+<h3>${name}</h3>
+</div>
+`
+
+}
+
+renderPacks()
+
+function openPack(type){
+
+document.getElementById("packs").style.display="none"
+
+let html='<button onclick="location.reload()">⬅ Back</button>'
+
+html+='<div class="container">'
+
+data[type].forEach(i=>{
+
+if(!cart[i.name]) cart[i.name]={g:0,price:i.price}
+
+html+=`
+
+<div class="card">
+
+<img src="${i.img}">
+
+<h3>${i.name}</h3>
+
+<p>${i.desc}</p>
+
+<div class="qty">
+
+<button onclick="change('${i.name}',-100)">-</button>
+
+<span id="${i.name}">${cart[i.name].g} g</span>
+
+<button onclick="change('${i.name}',100)">+</button>
+
+</div>
+
+</div>
+
+`
+
+})
+
+html+="</div>"
+
+document.getElementById("items").innerHTML=html
+
+}
+
+function change(name,val){
+
+cart[name].g+=val
+
+if(cart[name].g<0) cart[name].g=0
+
+document.getElementById(name).innerText=cart[name].g+" g"
+
+updateTotal()
+
+}
+
+function updateTotal(){
+
+total=0
+
+for(let i in cart){
+
+let g=cart[i].g
+let p=cart[i].price
+
+if(g>0){
+
+total+=(g/100)*p
+
+}
+
+}
+
+document.getElementById("total").innerText=total
+
+}
+
+function order(){
+
+let msg="Hello EZ Meals%0AOrder:%0A"
+
+for(let i in cart){
+
+if(cart[i].g>0){
+
+msg+=i+" "+cart[i].g+"g%0A"
+
+}
+
+}
+
+msg+="Total Rs "+total
+
+window.open("https://wa.me/94762522078?text="+msg)
+
+}
+
+function openAdmin(){
+
+document.getElementById("adminLogin").style.display="flex"
+
+}
+
+function login(){
+
+if(user.value==="ezmealadmin" && pass.value==="9999"){
+
+document.getElementById("adminControls").style.display="block"
+
+}
+
+}
+
+function addItem(){
+
+let file=document.getElementById("iimg").files[0]
+
+let reader=new FileReader()
+
+reader.onload=function(){
+
+let item={
+
+name:iname.value,
+desc:idesc.value,
+price:Number(iprice.value),
+img:reader.result
+
+}
+
+data[ipack.value].push(item)
+
+alert("Item Added")
+
+}
+
+reader.readAsDataURL(file)
+
+}
 
 if('serviceWorker' in navigator){
 navigator.serviceWorker.register('service-worker.js')
