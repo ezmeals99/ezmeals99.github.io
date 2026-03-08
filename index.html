@@ -14,12 +14,14 @@
 body{
 font-family:Arial;
 margin:0;
-background:#f5f5f5;
+background:#f4f4f4;
 text-align:center;
 }
 
 header{
 padding:20px;
+background:white;
+box-shadow:0 2px 5px rgba(0,0,0,0.1);
 position:relative;
 }
 
@@ -27,7 +29,7 @@ position:relative;
 position:absolute;
 right:20px;
 top:20px;
-font-size:24px;
+font-size:22px;
 cursor:pointer;
 }
 
@@ -43,32 +45,44 @@ padding:20px;
 width:220px;
 background:white;
 border-radius:12px;
-box-shadow:0 4px 12px rgba(0,0,0,0.1);
+box-shadow:0 4px 10px rgba(0,0,0,0.1);
+overflow:hidden;
+cursor:pointer;
 }
 
 .card img{
 width:100%;
 height:150px;
 object-fit:cover;
-border-radius:12px 12px 0 0;
+}
+
+.card h3{
+margin:10px;
+}
+
+.card p{
+font-size:14px;
+padding:0 10px;
 }
 
 .qty{
 display:flex;
 justify-content:center;
 gap:10px;
-margin:10px;
+padding:10px;
 }
 
 button{
 padding:6px 12px;
+border:none;
+background:#28a745;
+color:white;
+border-radius:6px;
 cursor:pointer;
 }
 
 .delBtn{
 background:red;
-color:white;
-border:none;
 }
 
 .total{
@@ -103,8 +117,8 @@ width:300px;
 
 .adminPanel input, .adminPanel select{
 width:100%;
-margin:5px 0;
-padding:6px;
+margin:6px 0;
+padding:7px;
 }
 
 </style>
@@ -150,7 +164,7 @@ Total Rs <span id="total">0</span>
 
 <h3>Add Item</h3>
 
-<input id="iname" placeholder="Name">
+<input id="iname" placeholder="Item Name">
 <input id="idesc" placeholder="Description">
 <input id="iprice" placeholder="Price per 100g">
 
@@ -172,7 +186,7 @@ Total Rs <span id="total">0</span>
 
 <script>
 
-let data=JSON.parse(localStorage.getItem("ezmeals")) || {
+let data=JSON.parse(localStorage.getItem("ezmeals"))||{
 fruits:[],
 soup:[],
 curry:[]
@@ -186,20 +200,23 @@ function renderPacks(){
 
 let html=""
 
-html+=packCard("Fruit Packs","fruits")
-html+=packCard("Soup Packs","soup")
-html+=packCard("Curry Packs","curry")
+html+=packCard("Fruit Packs","fruits","fruit")
+html+=packCard("Soup Packs","soup","soup")
+html+=packCard("Curry Packs","curry","curry")
 
 document.getElementById("packs").innerHTML=html
 
 }
 
-function packCard(name,type){
+function packCard(name,type,img){
 
-return `
+return`
 <div class="card" onclick="openPack('${type}')">
-<img src="https://source.unsplash.com/400x300/?${type}">
+
+<img src="https://source.unsplash.com/400x300/?${img}">
+
 <h3>${name}</h3>
+
 </div>
 `
 
@@ -217,7 +234,7 @@ html+='<div class="container">'
 
 data[type].forEach(i=>{
 
-if(!cart[i.name]) cart[i.name]={g:0,price:i.price}
+if(!cart[i.name])cart[i.name]={g:0,price:i.price}
 
 html+=`
 
@@ -229,7 +246,7 @@ html+=`
 
 <p>${i.desc}</p>
 
-${isAdmin ? `<button class="delBtn" onclick="deleteItem('${type}','${i.name}')">Delete</button>` : ""}
+${isAdmin?`<button class="delBtn" onclick="deleteItem('${type}','${i.name}')">Delete</button>`:""}
 
 <div class="qty">
 
@@ -257,7 +274,7 @@ function change(name,val){
 
 cart[name].g+=val
 
-if(cart[name].g<0) cart[name].g=0
+if(cart[name].g<0)cart[name].g=0
 
 document.getElementById(name).innerText=cart[name].g+" g"
 
@@ -314,7 +331,7 @@ document.getElementById("adminLogin").style.display="flex"
 
 function login(){
 
-if(user.value==="ezmealadmin" && pass.value==="9999"){
+if(user.value==="ezmealadmin"&&pass.value==="9999"){
 
 isAdmin=true
 
@@ -359,41 +376,15 @@ data[type]=data[type].filter(i=>i.name!==name)
 
 localStorage.setItem("ezmeals",JSON.stringify(data))
 
-alert("Item Deleted")
-
 location.reload()
 
 }
 
-if('serviceWorker' in navigator){
+if('serviceWorker'in navigator){
+
 navigator.serviceWorker.register('service-worker.js')
-}
-
-let deferredPrompt;
-
-window.addEventListener('beforeinstallprompt',(e)=>{
-
-e.preventDefault();
-
-deferredPrompt=e;
-
-let installBtn=document.createElement("button")
-
-installBtn.innerText="Install EZ Meals"
-
-installBtn.style.position="fixed"
-installBtn.style.bottom="90px"
-installBtn.style.right="20px"
-
-document.body.appendChild(installBtn)
-
-installBtn.onclick=()=>{
-
-deferredPrompt.prompt()
 
 }
-
-})
 
 </script>
 
