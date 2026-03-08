@@ -2,350 +2,293 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>EZ Meals</title>
+<title>EZ Meals - Official Store</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
 <style>
-body{font-family:Arial;margin:0;background:#f4f4f4;text-align:center}
-header{padding:20px;position:relative}
-header img{width:200px}
-.settings{position:absolute;right:20px;top:20px;font-size:24px;cursor:pointer}
+/* මූලික පෙනුම සහ Layout එක */
+body { font-family: Arial, sans-serif; margin: 0; background: #f4f4f4; text-align: center; }
+header { padding: 20px; position: relative; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+header img { width: 180px; }
+.settings { position: absolute; right: 20px; top: 20px; font-size: 24px; cursor: pointer; }
 
-.container{display:flex;flex-wrap:wrap;justify-content:center;gap:20px;padding:20px}
+/* Items පෙන්නන ආකාරය */
+.container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px; }
+.card { width: 220px; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; perspective: 1000px; }
+.card-inner { position: relative; width: 100%; height: 260px; transition: transform .6s; transform-style: preserve-3d; }
+.card.flip .card-inner { transform: rotateY(180deg); }
+.card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 12px; overflow: hidden; }
+.card-front img { width: 100%; height: 160px; object-fit: cover; }
+.card-front h3 { padding: 10px; margin: 0; font-size: 18px; color: #333; }
+.card-back { background: white; transform: rotateY(180deg); padding: 15px; display: flex; flex-direction: column; justify-content: center; box-sizing: border-box; }
 
-.card{
-width:220px;background:white;border-radius:12px;
-box-shadow:0 4px 12px rgba(0,0,0,0.1);
-cursor:pointer;perspective:1000px
-}
+/* ප්‍රමාණය වෙනස් කරන Buttons */
+.qty { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 15px; }
+.qty button { padding: 5px 12px; font-size: 18px; border: 1px solid #ddd; background: #eee; cursor: pointer; border-radius: 4px; }
+.qty span { font-weight: bold; min-width: 50px; }
 
-.card-inner{
-position:relative;width:100%;height:250px;
-transition:transform .6s;transform-style:preserve-3d
-}
+/* ඇණවුම් කිරීමේ පහසුකම් */
+.order { margin: 30px; padding: 15px 40px; font-size: 18px; background: #25D366; color: white; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(37,211,102,0.3); }
+.totalBubble { position: fixed; bottom: 20px; right: 20px; background: #28a745; color: white; padding: 14px 20px; border-radius: 40px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 99; }
 
-.card.flip .card-inner{transform:rotateY(180deg)}
-
-.card-front,.card-back{
-position:absolute;width:100%;height:100%;
-backface-visibility:hidden;border-radius:12px
-}
-
-.card-front img{width:100%;height:160px;object-fit:cover;border-radius:12px 12px 0 0}
-
-.card-front h3{padding:10px}
-
-.card-back{
-background:white;transform:rotateY(180deg);
-padding:15px;display:flex;flex-direction:column;justify-content:center
-}
-
-.qty{display:flex;justify-content:center;gap:10px;margin-top:10px}
-
-button{padding:6px 12px;font-size:16px}
-
-.back{margin:15px}
-
-.order{
-margin:20px;padding:14px 30px;font-size:18px;
-background:#25D366;color:white;border:none;border-radius:8px
-}
-
-.totalBubble{
-position:fixed;bottom:20px;right:20px;
-background:#28a745;color:white;
-padding:14px 18px;border-radius:40px;
-font-weight:bold;box-shadow:0 4px 10px rgba(0,0,0,0.2)
-}
-
-.adminPanel{
-display:none;position:fixed;top:0;left:0;width:100%;height:100%;
-background:rgba(0,0,0,0.5);align-items:center;justify-content:center
-}
-
-.adminBox{
-background:white;padding:25px;border-radius:10px;width:300px
-}
-
-.adminBox input,select{width:100%;padding:6px;margin:5px 0}
-
-.adminList{max-height:200px;overflow:auto;text-align:left}
-
+/* Admin Panel එකේ පෙනුම */
+.adminPanel { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 1000; }
+.adminBox { background: white; padding: 25px; border-radius: 15px; width: 340px; max-height: 90vh; overflow-y: auto; text-align: left; }
+.adminBox h3 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+.adminBox input, .adminBox select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+.adminList { max-height: 200px; overflow-y: auto; border: 1px solid #eee; padding: 10px; margin-top: 10px; background: #fafafa; }
+.adminItem { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #ddd; }
+#statusText { font-size: 12px; color: #007bff; margin: 5px 0; font-weight: bold; }
 </style>
 </head>
 
 <body>
 
 <header>
-<div class="settings" onclick="openAdmin()">⚙️</div>
-<img src="logo.png">
+    <div class="settings" onclick="openAdmin()">⚙️</div>
+    <img src="logo.png" onerror="this.src='https://via.placeholder.com/200x60?text=EZ+MEALS'">
 </header>
 
 <div id="packs" class="container"></div>
 
 <div id="items"></div>
 
-<div class="totalBubble">Total Rs <span id="total">0</span></div>
+<div class="totalBubble">Total: Rs <span id="total">0</span></div>
 
-<button class="order" onclick="order()">Order via WhatsApp</button>
+<button class="order" onclick="orderNow()">Order via WhatsApp</button>
 
-<div id="adminLogin" class="adminPanel">
-<div class="adminBox">
+<div id="adminPanel" class="adminPanel">
+    <div class="adminBox">
+        <button onclick="closeAdmin()" style="float:right; border:none; background:none; font-size:20px; cursor:pointer;">✕</button>
+        
+        <div id="loginForm">
+            <h3>Admin Login</h3>
+            <input id="user" type="text" placeholder="Username">
+            <input id="pass" type="password" placeholder="Password">
+            <button onclick="login()" style="width:100%; padding:12px; background:#007bff; color:white; border:none; border-radius:5px; margin-top:10px;">Login</button>
+        </div>
 
-<h3>Admin Login</h3>
+        <div id="adminControls" style="display:none">
+            <h3>Add New Item</h3>
+            <input id="itemName" placeholder="Item Name (e.g. Apple)">
+            <input id="itemDesc" placeholder="Description (e.g. Sweet & Fresh)">
+            <input id="itemPrice" type="number" placeholder="Price per 100g">
+            
+            <label style="font-size:12px; color:#666;">Select Image from Gallery:</label>
+            <input type="file" id="itemFile" accept="image/*">
+            
+            <select id="itemPack">
+                <option value="fruits">Fruit Pack</option>
+                <option value="soup">Soup Pack</option>
+                <option value="curry">Curry Pack</option>
+            </select>
+            
+            <button id="addBtn" onclick="addNewItem()" style="width:100%; padding:12px; background:#28a745; color:white; border:none; border-radius:5px;">Add to Menu</button>
+            <div id="statusText"></div>
 
-<input id="user" placeholder="Username">
-<input id="pass" type="password" placeholder="Password">
-<button onclick="login()">Login</button>
-
-<div id="adminControls" style="display:none">
-
-<h3>Add Item</h3>
-
-<input id="iname" placeholder="Item name">
-
-<input id="idesc" placeholder="Description">
-
-<input id="iprice" placeholder="Price per 100g">
-
-<input id="iimg" placeholder="Image URL">
-
-<select id="ipack">
-<option value="fruits">Fruit Pack</option>
-<option value="soup">Soup Pack</option>
-<option value="curry">Curry Pack</option>
-</select>
-
-<button onclick="addItem()">Add</button>
-
-<h3>Items</h3>
-
-<div id="adminList" class="adminList"></div>
-
-</div>
-
-</div>
+            <h4 style="margin-top:20px;">Manage Existing Items</h4>
+            <div id="adminList" class="adminList"></div>
+        </div>
+    </div>
 </div>
 
 <script>
+/** * CONFIGURATION: 
+ * ඔයාගේ Firebase සහ ImgBB විස්තර මෙතනට ඇතුළත් කර ඇත.
+ */
+const firebaseConfig = {
+    apiKey: "AIzaSyDE-9c0O23867d4182b0b76b4d", 
+    authDomain: "ez-meals-d681a.firebaseapp.com",
+    databaseURL: "https://ez-meals-d681a-default-rtdb.firebaseio.com",
+    projectId: "ez-meals-d681a",
+    storageBucket: "ez-meals-d681a.appspot.com",
+    appId: "1:1047284176312:web:9c0023867d4182b0b76b4d"
+};
 
-let packs=["fruits","soup","curry"]
+const IMGBB_API_KEY = "a079871c98a89cca7a0eeb755babdbab";
 
-let data=JSON.parse(localStorage.getItem("ezdata")) || {
+// Firebase සක්‍රීය කිරීම
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
 
-fruits:[
-{name:"Mango",desc:"Fresh mango pieces",price:200,img:"https://images.unsplash.com/photo-1605027990121-0a1f9b9e6f3c"}
-],
+let categories = ["fruits", "soup", "curry"];
+let menuData = { fruits: [], soup: [], curry: [] };
+let userCart = {};
 
-soup:[
-{name:"Potato",desc:"Fresh potato soup pack",price:150,img:"https://images.unsplash.com/photo-1547592166-23ac45744acd"}
-],
+// Database එකෙන් Data ලබා ගැනීම
+database.ref("ezdata").on("value", (snapshot) => {
+    if (snapshot.exists()) {
+        menuData = snapshot.val();
+        renderMainCategories();
+        updateAdminList();
+    }
+});
 
-curry:[
-{name:"Chicken",desc:"Fresh chicken curry pack",price:500,img:"https://images.unsplash.com/photo-1604908176997-4310b9c84e13"}
-]
-
+function renderMainCategories() {
+    let html = "";
+    categories.forEach(cat => {
+        html += `
+        <div class="card" onclick="showPack('${cat}')">
+            <div class="card-inner">
+                <div class="card-front">
+                    <img src="https://source.unsplash.com/400x300/?${cat},food">
+                    <h3>${cat.toUpperCase()} PACKS</h3>
+                </div>
+            </div>
+        </div>`;
+    });
+    document.getElementById("packs").innerHTML = html;
 }
 
-let cart={}
-let total=0
-
-function save(){
-localStorage.setItem("ezdata",JSON.stringify(data))
+function showPack(cat) {
+    document.getElementById("packs").style.display = "none";
+    let html = `<button style="margin:20px; padding:10px 20px; border-radius:5px; border:1px solid #ccc; cursor:pointer;" onclick="location.reload()">⬅ Back to Categories</button><div class="container">`;
+    
+    if (menuData[cat]) {
+        menuData[cat].forEach(item => {
+            if (!userCart[item.name]) userCart[item.name] = { weight: 0, price: item.price };
+            
+            html += `
+            <div class="card" onclick="this.classList.toggle('flip')">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <img src="${item.img}">
+                        <h3>${item.name}</h3>
+                    </div>
+                    <div class="card-back">
+                        <b style="font-size:18px;">${item.name}</b>
+                        <p style="font-size:14px; color:#666;">${item.desc}</p>
+                        <p><b>Rs ${item.price}</b> per 100g</p>
+                        <div class="qty">
+                            <button onclick="updateQty('${item.name}', -100, event)">-</button>
+                            <span id="qty_${item.name.replace(/\s/g,'')}">${userCart[item.name].weight}g</span>
+                            <button onclick="updateQty('${item.name}', 100, event)">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        });
+    }
+    document.getElementById("items").innerHTML = html + "</div>";
 }
 
-function renderPacks(){
-
-let html=""
-
-packs.forEach(p=>{
-
-html+=`
-<div class="card" onclick="openPack('${p}')">
-<div class="card-inner">
-<div class="card-front">
-<img src="https://source.unsplash.com/400x300/?${p}">
-<h3>${p.toUpperCase()} PACKS</h3>
-</div>
-</div>
-</div>
-`
-
-})
-
-document.getElementById("packs").innerHTML=html
-
+function updateQty(name, amount, event) {
+    event.stopPropagation();
+    userCart[name].weight = Math.max(0, userCart[name].weight + amount);
+    document.getElementById("qty_" + name.replace(/\s/g,'')).innerText = userCart[name].weight + "g";
+    
+    let currentTotal = 0;
+    for (let key in userCart) {
+        currentTotal += (userCart[key].weight / 100) * userCart[key].price;
+    }
+    document.getElementById("total").innerText = currentTotal;
 }
 
-renderPacks()
-
-function openPack(p){
-
-document.getElementById("packs").style.display="none"
-
-let html=`<button class="back" onclick="location.reload()">⬅ Back</button><div class="container">`
-
-data[p].forEach((i,index)=>{
-
-if(!cart[i.name])cart[i.name]={g:0,price:i.price}
-
-html+=`
-
-<div class="card" onclick="flip(this)">
-<div class="card-inner">
-
-<div class="card-front">
-<img src="${i.img}">
-<h3>${i.name}</h3>
-</div>
-
-<div class="card-back">
-
-<b>${i.name}</b>
-<p>${i.desc}</p>
-<p>Rs ${i.price} /100g</p>
-
-<div class="qty">
-
-<button onclick="change('${i.name}',${i.price},-100,event)">-</button>
-
-<span id="${i.name}">${cart[i.name].g} g</span>
-
-<button onclick="change('${i.name}',${i.price},100,event)">+</button>
-
-</div>
-
-</div>
-
-</div>
-</div>
-
-`
-
-})
-
-html+="</div>"
-
-document.getElementById("items").innerHTML=html
-
+function orderNow() {
+    let message = "Hello EZ Meals! %0A I would like to order: %0A";
+    let hasItems = false;
+    for (let key in userCart) {
+        if (userCart[key].weight > 0) {
+            message += `• ${key}: ${userCart[key].weight}g %0A`;
+            hasItems = true;
+        }
+    }
+    if (!hasItems) return alert("Please add at least one item to your cart!");
+    
+    let totalVal = document.getElementById("total").innerText;
+    message += `%0A *Total Amount: Rs ${totalVal}*`;
+    window.open(`https://wa.me/94762522078?text=${message}`);
 }
 
-function flip(el){
-el.classList.toggle("flip")
+// ADMIN PANEL FUNCTIONS
+function openAdmin() { document.getElementById("adminPanel").style.display = "flex"; }
+function closeAdmin() { document.getElementById("adminPanel").style.display = "none"; }
+
+function login() {
+    const u = document.getElementById("user").value;
+    const p = document.getElementById("pass").value;
+    if (u === "ezmealadmin" && p === "9999") {
+        document.getElementById("loginForm").style.display = "none";
+        document.getElementById("adminControls").style.display = "block";
+    } else {
+        alert("Invalid login credentials!");
+    }
 }
 
-function change(name,price,val,e){
+async function addNewItem() {
+    const fileInput = document.getElementById("itemFile");
+    const name = document.getElementById("itemName").value;
+    const desc = document.getElementById("itemDesc").value;
+    const price = document.getElementById("itemPrice").value;
+    const pack = document.getElementById("itemPack").value;
+    const status = document.getElementById("statusText");
 
-e.stopPropagation()
+    if (!fileInput.files[0] || !name || !price) return alert("Please fill all fields and select an image!");
 
-cart[name].g+=val
-if(cart[name].g<0)cart[name].g=0
+    status.innerText = "Uploading image... please wait.";
+    document.getElementById("addBtn").disabled = true;
 
-document.getElementById(name).innerText=cart[name].g+" g"
+    // ImgBB වලට පින්තූරය Upload කිරීම
+    let formData = new FormData();
+    formData.append("image", fileInput.files[0]);
 
-updateTotal()
+    try {
+        let response = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+            method: "POST",
+            body: formData
+        });
+        let result = await response.json();
+        
+        if (result.success) {
+            let newItem = {
+                name: name,
+                desc: desc,
+                price: Number(price),
+                img: result.data.url
+            };
 
+            if (!menuData[pack]) menuData[pack] = [];
+            menuData[pack].push(newItem);
+
+            // Firebase වලට Save කිරීම
+            database.ref("ezdata").set(menuData);
+            
+            status.innerText = "Successfully added!";
+            // Form එක clear කිරීම
+            document.getElementById("itemName").value = "";
+            document.getElementById("itemDesc").value = "";
+            document.getElementById("itemPrice").value = "";
+            fileInput.value = "";
+        }
+    } catch (error) {
+        alert("Error uploading image!");
+    }
+    document.getElementById("addBtn").disabled = false;
 }
 
-function updateTotal(){
-
-total=0
-
-for(let i in cart){
-
-let g=cart[i].g
-let p=cart[i].price
-
-if(g>0){
-total+=(g/100)*p
+function updateAdminList() {
+    let html = "";
+    for (let pack in menuData) {
+        menuData[pack].forEach((item, index) => {
+            html += `
+            <div class="adminItem">
+                <span>${item.name} (${pack})</span>
+                <button onclick="deleteItem('${pack}', ${index})" style="background:none; border:none; color:red; cursor:pointer;">❌</button>
+            </div>`;
+        });
+    }
+    document.getElementById("adminList").innerHTML = html;
 }
 
+function deleteItem(pack, index) {
+    if (confirm("Are you sure you want to delete this item?")) {
+        menuData[pack].splice(index, 1);
+        database.ref("ezdata").set(menuData);
+    }
 }
-
-document.getElementById("total").innerText=total
-
-}
-
-function order(){
-
-let msg="Hello EZ Meals%0AOrder:%0A"
-
-for(let i in cart){
-
-if(cart[i].g>0){
-msg+=i+" "+cart[i].g+"g%0A"
-}
-
-}
-
-msg+="Total Rs "+total
-
-window.open("https://wa.me/94762522078?text="+msg)
-
-}
-
-function openAdmin(){
-document.getElementById("adminLogin").style.display="flex"
-}
-
-function login(){
-
-if(user.value==="ezmealadmin" && pass.value==="9999"){
-
-document.getElementById("adminControls").style.display="block"
-renderAdmin()
-
-}
-
-}
-
-function addItem(){
-
-let item={
-name:iname.value,
-desc:idesc.value,
-price:Number(iprice.value),
-img:iimg.value
-}
-
-data[ipack.value].push(item)
-
-save()
-renderAdmin()
-renderPacks()
-
-}
-
-function renderAdmin(){
-
-let html=""
-
-for(let p in data){
-
-data[p].forEach((i,idx)=>{
-
-html+=`
-${i.name} (${p})
-<button onclick="del('${p}',${idx})">❌</button><br>
-`
-
-})
-
-}
-
-document.getElementById("adminList").innerHTML=html
-
-}
-
-function del(p,i){
-
-data[p].splice(i,1)
-
-save()
-renderAdmin()
-
-}
-
 </script>
 
 </body>
