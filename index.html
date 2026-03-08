@@ -9,36 +9,43 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
 <style>
-body { font-family: 'Segoe UI', Arial; margin: 0; background: #f0f0f0; text-align: center; }
+/* මුල් පෙනුම වෙනස් නොකර තබා ගැනීම */
+body { font-family: 'Segoe UI', Arial; margin: 0; background: #f4f4f4; text-align: center; }
 header { padding: 20px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: relative; }
-header img { width: 170px; }
+header img { width: 180px; }
 .settings { position: absolute; right: 20px; top: 20px; font-size: 24px; cursor: pointer; }
 
 .container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px; }
 
-/* Card Style - Dark Ash */
+/* Cards වල පසුබිම Dark Ash කිරීම */
 .card { 
-    width: 220px; background: #2c2c2c; color: white; border-radius: 15px; 
+    width: 230px; background: #333333; color: white; border-radius: 15px; 
     box-shadow: 0 5px 15px rgba(0,0,0,0.3); cursor: pointer; perspective: 1000px; 
 }
 .card-inner { position: relative; width: 100%; height: 280px; transition: transform 0.6s; transform-style: preserve-3d; }
 .card.flip .card-inner { transform: rotateY(180deg); }
+
 .card-front, .card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 15px; overflow: hidden; }
-.card-front img { width: 100%; height: 160px; object-fit: cover; }
-.card-back { background: #3a3a3a; transform: rotateY(180deg); padding: 15px; display: flex; flex-direction: column; justify-content: center; box-sizing: border-box; }
+.card-front img { width: 100%; height: 170px; object-fit: cover; border-bottom: 2px solid #444; }
+.card-front h3 { margin: 10px 0 5px 0; color: #ffffff; font-size: 18px; }
+.card-front p { font-size: 12px; padding: 0 10px; color: #bbb; margin-bottom: 10px; }
+
+.card-back { background: #2c2c2c; transform: rotateY(180deg); padding: 15px; display: flex; flex-direction: column; justify-content: center; box-sizing: border-box; }
 
 .qty { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 10px; }
-.qty button { background: #444; color: white; border: 1px solid #666; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+.qty button { background: #555; color: white; border: 1px solid #777; padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 18px; }
+.qty span { font-weight: bold; min-width: 40px; }
 
-.order { margin: 30px; padding: 15px 40px; font-size: 18px; background: #25D366; color: white; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; }
+.order { margin: 30px; padding: 15px 40px; font-size: 18px; background: #25D366; color: white; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
 .totalBubble { position: fixed; bottom: 20px; right: 20px; background: #28a745; color: white; padding: 15px 25px; border-radius: 50px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 100; }
 
 /* Admin Design */
 .adminPanel { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 1000; }
 .adminBox { background: white; padding: 25px; border-radius: 15px; width: 350px; max-height: 90vh; overflow-y: auto; text-align: left; }
-.adminBox input, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; }
-.tab-btn { padding: 8px; cursor: pointer; border: 1px solid #ddd; background: #eee; margin-right: 5px; }
-.active-tab { background: #007bff; color: white; }
+.adminBox input, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+.tab-btn { padding: 10px; cursor: pointer; border: 1px solid #ddd; background: #eee; margin-right: 5px; border-radius: 5px; }
+.active-tab { background: #007bff; color: white; border-color: #007bff; }
+.upload-status { font-size: 12px; color: blue; font-weight: bold; margin: 5px 0; }
 </style>
 </head>
 
@@ -54,7 +61,7 @@ header img { width: 170px; }
 </div>
 
 <div id="itemsView" style="display:none">
-    <button style="margin:20px; padding:10px;" onclick="showPacks()">⬅ Back to Packs</button>
+    <button style="margin:20px; padding:10px 20px; border-radius:5px; cursor:pointer;" onclick="showPacks()">⬅ Back to Packs</button>
     <div id="itemsContainer" class="container"></div>
 </div>
 
@@ -63,26 +70,29 @@ header img { width: 170px; }
 
 <div id="adminPanel" class="adminPanel">
     <div class="adminBox">
-        <button onclick="closeAdmin()" style="float:right">✕</button>
+        <button onclick="closeAdmin()" style="float:right; border:none; background:none; font-size:20px; cursor:pointer;">✕</button>
         <div id="loginForm">
             <h3>Admin Login</h3>
             <input id="user" placeholder="Username">
             <input id="pass" type="password" placeholder="Password">
-            <button onclick="login()" style="width:100%; padding:10px; background:#007bff; color:white; border:none;">Login</button>
+            <button onclick="login()" style="width:100%; padding:12px; background:#007bff; color:white; border:none; border-radius:5px; cursor:pointer;">Login</button>
         </div>
 
         <div id="adminControls" style="display:none">
-            <div style="margin-bottom:15px">
+            <div style="margin-bottom:20px; display:flex; justify-content:center;">
                 <button id="t1" class="tab-btn active-tab" onclick="switchTab(1)">Manage Packs</button>
                 <button id="t2" class="tab-btn" onclick="switchTab(2)">Add Items</button>
             </div>
 
             <div id="tab1">
-                <h4>Packs (Categories)</h4>
-                <input id="newPackName" placeholder="Pack Name (e.g. Rice Pack)">
+                <h4>Create New Pack</h4>
+                <input id="newPackName" placeholder="Pack Name (e.g. Fruit Pack)">
                 <input id="newPackDesc" placeholder="Brief Description">
-                <button onclick="addPack()" style="width:100%; background:#28a745; color:white; padding:8px;">Add Pack</button>
-                <div id="packList" style="margin-top:10px; border-top:1px solid #ddd; padding-top:10px;"></div>
+                <label style="font-size:12px;">Pack Image:</label>
+                <input type="file" id="packFile" accept="image/*">
+                <button id="packAddBtn" onclick="addPack()" style="width:100%; background:#28a745; color:white; padding:10px; border:none; border-radius:5px; cursor:pointer;">Create Pack</button>
+                <div id="packStatus" class="upload-status"></div>
+                <div id="packList" style="margin-top:15px; border-top:1px solid #ddd; padding-top:10px;"></div>
             </div>
 
             <div id="tab2" style="display:none">
@@ -91,15 +101,20 @@ header img { width: 170px; }
                 <input id="itemName" placeholder="Item Name">
                 <input id="itemDesc" placeholder="Description">
                 <input id="itemPrice" type="number" placeholder="Price/100g">
+                <label style="font-size:12px;">Item Image:</label>
                 <input type="file" id="itemFile" accept="image/*">
-                <button id="addBtn" onclick="addItem()" style="width:100%; background:#007bff; color:white; padding:10px;">Upload & Add</button>
-                <div id="itemList" style="margin-top:10px; max-height:150px; overflow:auto;"></div>
+                <button id="addBtn" onclick="addItem()" style="width:100%; background:#007bff; color:white; padding:10px; border:none; border-radius:5px; cursor:pointer;">Add Item</button>
+                <div id="itemStatus" class="upload-status"></div>
+                <div id="itemList" style="margin-top:15px; max-height:150px; overflow:auto; border:1px solid #eee; padding:5px;"></div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
+/** * CONFIGURATION: 
+ * ඔයාගේ Keys මම මෙතනට දැනටමත් දාලා තියෙන්නේ.
+ */
 const firebaseConfig = {
     apiKey: "AIzaSyDE-9c0O23867d4182b0b76b4d",
     authDomain: "ez-meals-d681a.firebaseapp.com",
@@ -115,10 +130,9 @@ const db = firebase.database();
 
 let ezData = { packs: {}, items: {} };
 let cart = {};
-let totalAmount = 0;
 
-// Firebase Data Sync
-db.ref("ez_pro_data").on("value", (snap) => {
+// Database එකෙන් Data එසැණින් ලබාගැනීම
+db.ref("ez_v3_data").on("value", (snap) => {
     if (snap.exists()) {
         ezData = snap.val();
         renderPacks();
@@ -128,20 +142,22 @@ db.ref("ez_pro_data").on("value", (snap) => {
 
 function renderPacks() {
     let html = "";
-    for (let id in ezData.packs) {
-        let p = ezData.packs[id];
-        html += `
-        <div class="card" onclick="showItems('${id}')">
-            <div class="card-inner">
-                <div class="card-front">
-                    <img src="https://source.unsplash.com/400x300/?food,${p.name}">
-                    <h3 style="color:white">${p.name.toUpperCase()}</h3>
-                    <p style="font-size:12px; padding:0 10px;">${p.desc || ''}</p>
+    if(ezData.packs) {
+        for (let id in ezData.packs) {
+            let p = ezData.packs[id];
+            html += `
+            <div class="card" onclick="showItems('${id}')">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <img src="${p.img || 'https://via.placeholder.com/400x300?text=No+Image'}">
+                        <h3>${p.name.toUpperCase()}</h3>
+                        <p>${p.desc || ''}</p>
+                    </div>
                 </div>
-            </div>
-        </div>`;
+            </div>`;
+        }
     }
-    document.getElementById("packs").innerHTML = html || "No packs available. Add some from Admin.";
+    document.getElementById("packs").innerHTML = html || "<p>No packs available. Please add from Admin.</p>";
 }
 
 function showItems(packId) {
@@ -151,19 +167,19 @@ function showItems(packId) {
     let items = ezData.items ? ezData.items[packId] : [];
     
     if (items) {
-        items.forEach((item, idx) => {
+        items.forEach((item) => {
             if (!cart[item.name]) cart[item.name] = { qty: 0, price: item.price };
             html += `
             <div class="card" onclick="this.classList.toggle('flip')">
                 <div class="card-inner">
                     <div class="card-front">
                         <img src="${item.img}">
-                        <h3 style="color:white">${item.name}</h3>
+                        <h3>${item.name}</h3>
                     </div>
                     <div class="card-back">
-                        <b>${item.name}</b>
-                        <p style="font-size:12px">${item.desc}</p>
-                        <p>Rs ${item.price}/100g</p>
+                        <b style="color:#fff">${item.name}</b>
+                        <p style="font-size:12px; color:#ccc">${item.desc}</p>
+                        <p style="color:#25D366">Rs ${item.price}/100g</p>
                         <div class="qty">
                             <button onclick="changeQty('${item.name}', -100, event)">-</button>
                             <span id="q_${item.name.replace(/\s/g,'')}">${cart[item.name].qty}g</span>
@@ -186,19 +202,14 @@ function changeQty(name, val, e) {
     e.stopPropagation();
     cart[name].qty = Math.max(0, cart[name].qty + val);
     document.getElementById("q_"+name.replace(/\s/g,'')).innerText = cart[name].qty + "g";
-    calculateTotal();
-}
-
-function calculateTotal() {
-    totalAmount = 0;
-    for (let k in cart) {
-        totalAmount += (cart[k].qty / 100) * cart[k].price;
-    }
-    document.getElementById("total").innerText = totalAmount;
+    
+    let total = 0;
+    for (let k in cart) total += (cart[k].qty / 100) * cart[k].price;
+    document.getElementById("total").innerText = total;
 }
 
 function sendOrder() {
-    let msg = "EZ Meals Order:%0A";
+    let msg = "Hello EZ Meals! Order Details:%0A";
     let has = false;
     for (let k in cart) {
         if (cart[k].qty > 0) {
@@ -206,8 +217,9 @@ function sendOrder() {
             has = true;
         }
     }
-    if (!has) return alert("Cart is empty!");
-    window.open(`https://wa.me/94762522078?text=${msg}%0A*Total: Rs ${totalAmount}*`);
+    if (!has) return alert("Your cart is empty!");
+    let finalTotal = document.getElementById("total").innerText;
+    window.open(`https://wa.me/94762522078?text=${msg}%0A*Total Amount: Rs ${finalTotal}*`);
 }
 
 // Admin Logic
@@ -218,7 +230,7 @@ function login() {
     if (user.value === "ezmealadmin" && pass.value === "9999") {
         document.getElementById("loginForm").style.display = "none";
         document.getElementById("adminControls").style.display = "block";
-    }
+    } else { alert("Wrong Login!"); }
 }
 
 function switchTab(t) {
@@ -228,24 +240,38 @@ function switchTab(t) {
     document.getElementById("t2").className = t === 2 ? "tab-btn active-tab" : "tab-btn";
 }
 
-function addPack() {
+// Pack එකක් පින්තූරයත් එක්ක ඇඩ් කිරීම
+async function addPack() {
     let name = document.getElementById("newPackName").value;
     let desc = document.getElementById("newPackDesc").value;
-    if (!name) return;
-    let id = "p_" + Date.now();
-    if (!ezData.packs) ezData.packs = {};
-    ezData.packs[id] = { name, desc };
-    db.ref("ez_pro_data").set(ezData);
-    document.getElementById("newPackName").value = "";
-    document.getElementById("newPackDesc").value = "";
+    let file = document.getElementById("packFile").files[0];
+    let status = document.getElementById("packStatus");
+
+    if (!name || !file) return alert("Enter Name and Select Image!");
+
+    status.innerText = "Uploading Pack Image...";
+    let fd = new FormData(); fd.append("image", file);
+
+    try {
+        let res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method: "POST", body: fd });
+        let rData = await res.json();
+        let id = "p_" + Date.now();
+        if (!ezData.packs) ezData.packs = {};
+        ezData.packs[id] = { name, desc, img: rData.data.url };
+        db.ref("ez_v3_data").set(ezData);
+        status.innerText = "Pack Created!";
+        document.getElementById("newPackName").value = "";
+        document.getElementById("packFile").value = "";
+    } catch (e) { status.innerText = "Upload Failed!"; }
 }
 
 async function addItem() {
     let pId = document.getElementById("targetPack").value;
     let file = document.getElementById("itemFile").files[0];
+    let status = document.getElementById("itemStatus");
     if (!pId || !file || !itemName.value) return alert("Fill all fields");
 
-    document.getElementById("addBtn").disabled = true;
+    status.innerText = "Adding Item...";
     let fd = new FormData(); fd.append("image", file);
     
     try {
@@ -256,17 +282,17 @@ async function addItem() {
         if (!ezData.items) ezData.items = {};
         if (!ezData.items[pId]) ezData.items[pId] = [];
         ezData.items[pId].push(item);
-        db.ref("ez_pro_data").set(ezData);
-        alert("Added!");
-    } catch (e) { alert("Error!"); }
-    document.getElementById("addBtn").disabled = false;
+        db.ref("ez_v3_data").set(ezData);
+        status.innerText = "Item Added!";
+        itemName.value = ""; itemPrice.value = ""; document.getElementById("itemFile").value = "";
+    } catch (e) { status.innerText = "Error!"; }
 }
 
 function updateAdminUI() {
     let pList = "";
     let selectHtml = "";
     for (let id in ezData.packs) {
-        pList += `<div>${ezData.packs[id].name} <button onclick="delPack('${id}')" style="color:red">❌</button></div>`;
+        pList += `<div style="padding:5px; border-bottom:1px solid #eee">${ezData.packs[id].name} <button onclick="delPack('${id}')" style="color:red; float:right; border:none; background:none; cursor:pointer;">❌</button></div>`;
         selectHtml += `<option value="${id}">${ezData.packs[id].name}</option>`;
     }
     document.getElementById("packList").innerHTML = pList;
@@ -274,22 +300,25 @@ function updateAdminUI() {
 
     let iList = "";
     for (let pid in ezData.items) {
+        let packName = ezData.packs[pid] ? ezData.packs[pid].name : "Deleted Pack";
         ezData.items[pid].forEach((it, idx) => {
-            iList += `<div>${it.name} <button onclick="delItem('${pid}',${idx})">❌</button></div>`;
+            iList += `<div style="padding:5px; border-bottom:1px solid #eee">${it.name} (${packName}) <button onclick="delItem('${pid}',${idx})" style="color:red; float:right; border:none; background:none; cursor:pointer;">❌</button></div>`;
         });
     }
     document.getElementById("itemList").innerHTML = iList;
 }
 
 function delPack(id) { 
-    if(confirm("Delete Pack? Items inside will remain hidden.")){
+    if(confirm("Delete this Pack? Items inside will also be hidden.")){
         delete ezData.packs[id]; 
-        db.ref("ez_pro_data").set(ezData); 
+        db.ref("ez_v3_data").set(ezData); 
     }
 }
 function delItem(pid, idx) { 
-    ezData.items[pid].splice(idx, 1); 
-    db.ref("ez_pro_data").set(ezData); 
+    if(confirm("Delete Item?")){
+        ezData.items[pid].splice(idx, 1); 
+        db.ref("ez_v3_data").set(ezData); 
+    }
 }
 </script>
 </body>
