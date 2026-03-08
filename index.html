@@ -1,56 +1,90 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Website</title>
+<title>EZ Meals</title>
 
 <style>
+
 body{
-    margin:0;
-    font-family:Arial, sans-serif;
-    background:#f5f5f5;
+font-family:Arial;
+margin:0;
+background:#f5f5f5;
+text-align:center;
 }
 
 header{
-    background:#111;
-    color:white;
-    padding:20px;
-    text-align:center;
+padding:30px;
 }
 
-nav{
-    background:#333;
-    padding:10px;
-    text-align:center;
+header img{
+width:220px;
 }
 
-nav a{
-    color:white;
-    margin:0 15px;
-    text-decoration:none;
-    font-weight:bold;
+.container{
+display:flex;
+justify-content:center;
+flex-wrap:wrap;
+gap:20px;
+padding:20px;
 }
 
-.hero{
-    text-align:center;
-    padding:80px 20px;
+.card{
+width:220px;
+background:white;
+border-radius:10px;
+box-shadow:0 4px 10px rgba(0,0,0,0.1);
+cursor:pointer;
+overflow:hidden;
 }
 
-.hero h1{
-    font-size:40px;
+.card img{
+width:100%;
+height:150px;
+object-fit:cover;
 }
 
-.hero p{
-    color:#555;
+.card h3{
+padding:10px;
 }
 
-footer{
-    background:#111;
-    color:white;
-    text-align:center;
-    padding:15px;
+.items{
+display:none;
+padding:20px;
 }
+
+.item{
+background:white;
+margin:10px;
+padding:15px;
+border-radius:10px;
+box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
+
+.qty{
+display:flex;
+justify-content:center;
+align-items:center;
+gap:10px;
+margin-top:10px;
+}
+
+button{
+padding:5px 10px;
+font-size:16px;
+cursor:pointer;
+}
+
+.order{
+margin:30px;
+padding:15px 30px;
+font-size:18px;
+background:#25D366;
+color:white;
+border:none;
+border-radius:8px;
+}
+
 </style>
 
 </head>
@@ -58,24 +92,120 @@ footer{
 <body>
 
 <header>
-<h1>My Website</h1>
+<img src="logo.png">
 </header>
 
-<nav>
-<a href="#">Home</a>
-<a href="#">About</a>
-<a href="#">Projects</a>
-<a href="#">Contact</a>
-</nav>
+<div class="container">
 
-<section class="hero">
-<h1>Welcome to my website</h1>
-<p>This is my first GitHub Pages website preview.</p>
-</section>
+<div class="card" onclick="showPack('fruits')">
+<img src="https://images.unsplash.com/photo-1619566636858-adf3ef46400b">
+<h3>Fruit Packs</h3>
+</div>
 
-<footer>
-<p>© 2026 My Website</p>
-</footer>
+<div class="card" onclick="showPack('soup')">
+<img src="https://images.unsplash.com/photo-1547592166-23ac45744acd">
+<h3>Soup Packs</h3>
+</div>
+
+<div class="card" onclick="showPack('curry')">
+<img src="https://images.unsplash.com/photo-1604908176997-4310b9c84e13">
+<h3>Curry Packs</h3>
+</div>
+
+</div>
+
+<div id="items" class="items"></div>
+
+<button class="order" onclick="order()">Order via WhatsApp</button>
+
+<script>
+
+let data = {
+
+fruits:[
+{name:"Mango 200g"},
+{name:"Apple 100g"},
+{name:"Banana 100g"}
+],
+
+soup:[
+{name:"Potato"},
+{name:"Beans"}
+],
+
+curry:[
+{name:"Chicken"},
+{name:"Fish"}
+]
+
+}
+
+let cart={}
+
+function showPack(type){
+
+let html=""
+
+data[type].forEach(item=>{
+
+cart[item.name]=0
+
+html+=`
+
+<div class="item">
+
+<h3>${item.name}</h3>
+
+<div class="qty">
+
+<button onclick="change('${item.name}',-1)">-</button>
+
+<span id="${item.name}">0</span>
+
+<button onclick="change('${item.name}',1)">+</button>
+
+</div>
+
+</div>
+
+`
+
+})
+
+document.getElementById("items").innerHTML=html
+document.getElementById("items").style.display="block"
+
+}
+
+function change(name,val){
+
+cart[name]+=val
+
+if(cart[name]<0) cart[name]=0
+
+document.getElementById(name).innerText=cart[name]
+
+}
+
+function order(){
+
+let msg="Hello EZ Meals,%0AOrder:%0A"
+
+for(let item in cart){
+
+if(cart[item]>0){
+
+msg+=item+" x"+cart[item]+"%0A"
+
+}
+
+}
+
+window.open("https://wa.me/94762522078?text="+msg)
+
+}
+
+</script>
 
 </body>
 </html>
